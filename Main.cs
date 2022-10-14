@@ -22,6 +22,15 @@ namespace MalisIpcSync
         {
             Chat.WriteLine("- Mali's IP Sync -", ChatColor.Gold);
 
+
+            string tutMsg = 
+                "\n" +
+                "/ipsync all - sync ip from current toon to all other clients\n" +
+                "/ipsync profession - sync ip from current toon to all other clients with same profession as the command giver\n";
+            
+            Chat.WriteLine("- Mali's IP Sync -", ChatColor.Gold);
+            Chat.WriteLine(tutMsg,ChatColor.DarkPink);
+          
             PluginDir = pluginDir;
             _ipc = new IPCChannel(243);
             _ipc.RegisterCallback((int)IPCOpcode.IpSkill, OnIpSkillMessageReceived);
