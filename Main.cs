@@ -22,7 +22,6 @@ namespace MalisIpcSync
         {
             Chat.WriteLine("- Mali's IP Sync -", ChatColor.Gold);
 
-
             string tutMsg = 
                 "\n" +
                 "/ipsync all - sync ip from current toon to all other clients\n" +
