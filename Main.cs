@@ -9,6 +9,7 @@ using SmokeLounge.AOtomation.Messaging.Messages;
 using SmokeLounge.AOtomation.Messaging.Messages.N3Messages;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 
@@ -16,8 +17,9 @@ namespace MalisIpcSync
 {
     public class Main : AOPluginEntry
     {
-        public static string PluginDir;
         private IPCChannel _ipc;
+        private PlayerSkills _playerSkills;
+
         public unsafe override void Run(string pluginDir)
         {
             Chat.WriteLine("- Mali's IP Sync -", ChatColor.Gold);
@@ -27,29 +29,34 @@ namespace MalisIpcSync
                 "/ipsync all - sync ip from current toon to all other clients\n" +
                 "/ipsync profession - sync ip from current toon to all other clients with same profession as the command giver\n";
             
-            Chat.WriteLine("- Mali's IP Sync -", ChatColor.Gold);
-            Chat.WriteLine(tutMsg,ChatColor.DarkPink);
-          
-            PluginDir = pluginDir;
+            Chat.WriteLine(tutMsg, ChatColor.DarkPink);
+
             _ipc = new IPCChannel(243);
             _ipc.RegisterCallback((int)IPCOpcode.IpSkill, OnIpSkillMessageReceived);
+            _playerSkills = new PlayerSkills();
 
             Chat.RegisterCommand("ipsync", (string command, string[] param, ChatWindow chatWindow) =>
             {
-                GameTuple<Stat, uint>[] _ipSkills = new GameTuple<Stat, uint>[73].SetIpAbleSkills();
+                if (param == null)
+                    return;
 
-                if (param == null || param.Count() != 1 || !Enum.TryParse(param[0].CapitalizeFirstLetter(), out SyncType syncType))
+                if (param.Length != 1)
+                {
+                    Chat.WriteLine($"Invalid command (valid: /ipsync 'all / profession')");
+                    return;
+                }
+                TextInfo textInfo = CultureInfo.CurrentCulture.TextInfo;
+
+                if (!Enum.TryParse(textInfo.ToTitleCase(param[0]), out SyncType syncType))
                 {
                     Chat.WriteLine($"Invalid parameter '{param[0]}' (available: All, Profession)");
                     return;
                 }
 
-                _ipSkills.CopyPlayerSkills();
-
                 _ipc.Broadcast(new IpSkillMessage
                 {
                     Profession = syncType == SyncType.All ? Profession.Unknown : DynelManager.LocalPlayer.Profession,
-                    Skills = _ipSkills
+                    Skills = _playerSkills.GetSkills()
                 });
             });
         }
@@ -61,7 +68,7 @@ namespace MalisIpcSync
             if (ipSkillMessage.Profession != Profession.Unknown && ipSkillMessage.Profession != DynelManager.LocalPlayer.Profession)
                 return;
 
-            DynelManager.LocalPlayer.IpSkills(ipSkillMessage.Skills);
+            _playerSkills.SetSkills(ipSkillMessage.Skills);
         }
     }
 
